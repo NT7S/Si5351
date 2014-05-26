@@ -24,21 +24,21 @@ The "public" functions of the library are documented in the code. It should be f
 
 Before you do anything with the Si5351, you will need to initialize the communications and the IC:
 
-> si5351_init();
+    si5351_init();
 
 Now let's set the CLK0 output to 10 MHz:
 
-> si5351_set_freq(10000000, SI5351_CLK0);
+    si5351_set_freq(10000000, SI5351_CLK0);
 
 If we like we can adjust the output drive power:
 
-> si5351_drive_strength(SI5351_CLK0, SI5351_DRIVE_4MA);
+    si5351_drive_strength(SI5351_CLK0, SI5351_DRIVE_4MA);
 
-Also, there will be some inherent error in the reference crystal's actual frequency, so we can measure the difference between the actual and nominal output frequency in Hz, multiply by 10, and enter this correction factor into the library to store in EEPROM for future use. Once this is stored, it should not need to be set again unless you want to redo the calibration. With an accurate measurement at one frequency, this calibration should be good across the entire tuning range:
+Also, there will be some inherent error in the reference crystal's actual frequency, so we can measure the difference between the actual and nominal output frequency in Hz, multiply by 10, make it an integer, and enter this correction factor into the library to store in EEPROM for future use. Once this is stored, it should not need to be set again unless you want to redo the calibration. With an accurate measurement at one frequency, this calibration should be good across the entire tuning range:
 
-> si5351_set_correction(-900);
+    si5351_set_correction(-900);
 
-One thing to note: the library is set to for a 25 MHz reference crystal. If you are using a 27 MHz crystal, please change the SI5351_XTAL_FREQ define in si5351.h.
+One thing to note: the library is set for a 25 MHz reference crystal. If you are using a 27 MHz crystal, please change the SI5351_XTAL_FREQ define in si5351.h.
 
 Also, the si5351_init() function sets the crystal load capacitance for 8 pF. Change this value if you are using a crystal with a different load capacitance.
 
