@@ -14,7 +14,7 @@ The Si5351 is a +3.3 V only part, so if you are not using a +3.3 V microcontroll
 
 Wire the SDA and SCL pins of the Si5351 to the corresponding pins on the AVR. Since the I2C interface is set to 400 kHz, use 1 k&Omega; pullup resistors from +3.3 V to the SDA and SCL lines.
 
-Connect a 25 MHz or 27 MHz crystal with a load capacitance of 6, 8, or 10 pF to the Si5351 XA and XB pins. Locate the crystal as close to the Si5351 as possible and keep the leads as short as possible. Please use a SMT crystal. A crystal with leads will have too much stray capacitance.
+Connect a 25 MHz or 27 MHz crystal with a load capacitance of 6, 8, or 10 pF to the Si5351 XA and XB pins. Locate the crystal as close to the Si5351 as possible and keep the traces as short as possible. Please use a SMT crystal. A crystal with leads will have too much stray capacitance.
 
 Usage
 -----
@@ -40,11 +40,13 @@ Also, there will be some inherent error in the reference crystal's actual freque
 
 One thing to note: the library is set to for a 25 MHz reference crystal. If you are using a 27 MHz crystal, please change the SI5351_XTAL_FREQ define in si5351.h.
 
+Also, the si5351_init() function sets the crystal load capacitance for 8 pF. Change this value if you are using a crystal with a different load capacitance.
+
 Oddities
 --------
 The Si5351 datasheet specifies an I2C address of 0b1100000 (0x60), but this has not been the correct address on the samples used at the NT7S lab. Using the Bus Pirate's I2C address scan macro, we have determined that the address that the Si5351A wants to see is 0x6F (0xDE in 8-bit format), so that is what we use in the library. If you have trouble communicating with your Si5351, you may want to adjust this value in the si5351.h file back to the specified value (0xC0 in 8-bit format). Given the high number of errors we have found in the datasheet so far, this is unsurprising.
 
-Right now, this code is focused solely on the 3-output 10-MSOP variant (Si5351A3). Since some of the code was derived from the Si5351 driver in the Linux kernel, it may be useable on with the other variants, but certainly certain features won't work yet. With any luck, we will get the library to work with the other variants as well, or even better, maybe someone will take the initiative, write the code, and send me a pull request.
+Right now, this code is focused solely on the 3-output 10-MSOP variant (Si5351A3). Since some of the code was derived from the Si5351 driver in the Linux kernel, it may be useable on with the other variants, but certainly many features won't work yet. With any luck, we will get the library to work with the other variants as well, or even better, maybe someone will take the initiative, write the code, and send me a pull request.
 
 TODO
 ----
