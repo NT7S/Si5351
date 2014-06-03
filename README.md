@@ -28,7 +28,12 @@ Before you do anything with the Si5351, you will need to initialize the communic
 
 Now let's set the CLK0 output to 10 MHz:
 
-    si5351_set_freq(10000000, SI5351_CLK0);
+    si5351_set_freq(10000000, 0, SI5351_CLK0);
+    
+The second value passed in the above function is the desired driving PLL frequency. Entering a 0 will have the function choose a PLL frequency for you. If you would like to use a fixed PLL frequency to drive a multisynth (in order to ensure glitch-free tuning), set the desired PLL frequency first using the function below, then specify that frequency in the si5351_set_freq() function:
+
+    si5351_set_pll(900000000, SI5351_PLLA);
+    si5351_set_freq(10000000, 900000000, SI5351_CLK0);
 
 If we like we can adjust the output drive power:
 
@@ -46,13 +51,15 @@ Oddities
 --------
 The Si5351 datasheet specifies an I2C address of 0b1100000 (0x60), but this has not been the correct address on the samples used at the NT7S lab. Using the Bus Pirate's I2C address scan macro, we have determined that the address that the Si5351A wants to see is 0x6F (0xDE in 8-bit format), so that is what we use in the library. If you have trouble communicating with your Si5351, you may want to adjust this value in the si5351.h file back to the specified value (0xC0 in 8-bit format). Given the high number of errors we have found in the datasheet so far, this is unsurprising.
 
+**Update:** It turns out that we were sent defective parts. Another batch was ordered from a different vendor and they work on the proper I2C address of 0x60. The code has been updated to reflect the correct address.
+
 Right now, this code is focused solely on the 3-output 10-MSOP variant (Si5351A3). Since some of the code was derived from the Si5351 driver in the Linux kernel, it may be useable on with the other variants, but certainly many features won't work yet. With any luck, we will get the library to work with the other variants as well, or even better, maybe someone will take the initiative, write the code, and send me a pull request.
 
 TODO
 ----
- - Status flag or return correction constant
- - Implement tuning below 1 MHz
- - Implement tuning above 150 MHz
+ - [x] Status flag or return correction constant
+ - [ ] Implement tuning below 1 MHz
+ - [ ] Implement tuning above 150 MHz
 
 > Written with [StackEdit](https://stackedit.io/).
 
