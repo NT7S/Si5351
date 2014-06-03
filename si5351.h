@@ -32,8 +32,9 @@
 
 /* Define definitions */
 
-#define SI5351_BUS_BASE_ADDR				0xDE
+#define SI5351_BUS_BASE_ADDR				0xC0
 #define SI5351_XTAL_FREQ					25000000
+#define SI5351_PLL_FIXED					900000000
 
 #define SI5351_PLL_VCO_MIN					600000000
 #define SI5351_PLL_VCO_MAX					900000000
@@ -251,11 +252,13 @@ struct Si5351IntStatus
 /* Suggested public function prototypes */
 
 void si5351_init(void);
-void si5351_set_freq(uint32_t, enum si5351_clock);
+void si5351_set_freq(uint32_t, uint32_t, enum si5351_clock);
+void si5351_set_pll(uint32_t, enum si5351_pll);
 void si5351_clock_enable(enum si5351_clock, uint8_t);
 void si5351_drive_strength(enum si5351_clock, enum si5351_drive);
 void si5351_update_status(void);
 void si5351_set_correction(int32_t);
+int32_t si5351_get_correction(void);
 
 /* Suggested private function prototypes */
 

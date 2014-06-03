@@ -28,9 +28,9 @@ void i2c_init(void)
 {
 	power_twi_enable();
 
-	//set SCL to ~400 kHz
-	TWSR = 0;
-	TWBR = 0x0C;
+	//set SCL to ~100 kHz for 8 MHz CPU clock
+	TWSR = 0; /* Prescale /1 */
+	TWBR = 0x25;
 
 	//enable I2C
 	TWCR = _BV(TWEN);

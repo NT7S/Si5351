@@ -67,21 +67,32 @@ void si5351_init(void)
 }
 
 /*
- * si5351_set_freq(uint32_t freq, enum si5351_clock output)
+ * si5351_set_freq(uint32_t freq, uint32_t pll_freq, enum si5351_clock output)
  *
  * Sets the clock frequency of the specified CLK output
  *
  * freq - Output frequency in Hz
+ * pll_freq - Frequency of the PLL driving the Multisynth
+ *   Use a 0 to have the function choose a PLL frequency
  * clk - Clock output
  *   (use the si5351_clock enum)
  */
-void si5351_set_freq(uint32_t freq, enum si5351_clock clk)
+void si5351_set_freq(uint32_t freq, uint32_t pll_freq, enum si5351_clock clk)
 {
 	struct Si5351RegSet ms_reg, pll_reg;
 	enum si5351_pll target_pll;
 
 	/* Calculate the synth parameters */
-	uint32_t pll_freq = multisynth_calc(freq, &ms_reg);
+	/* If pll_freq is 0, let the algorithm pick a PLL frequency */
+	if(pll_freq == 0)
+	{
+		uint32_t pll_freq = multisynth_calc(freq, &ms_reg);
+	}
+	/* TODO: bounds checking */
+	else
+	{
+		multisynth_recalc(freq, pll_freq, &ms_reg);
+	}
 
 	/* Determine which PLL to use */
 	/* CLK0 gets PLLA, CLK1 gets PLLB */
@@ -120,47 +131,51 @@ void si5351_set_freq(uint32_t freq, enum si5351_clock clk)
 	/* Prepare an array for parameters to be written to */
 	uint8_t *params = malloc(sizeof(uint8_t) * 30);
 	uint8_t i = 0;
+	uint8_t temp;
 
 	/* PLL parameters first */
 
-	/* Registers 26-27 */
-	uint8_t temp = ((pll_reg.p3 >> 8) & 0xFF);
-	params[i++] = temp;
-
-	temp = (uint8_t)(pll_reg.p3  & 0xFF);
-	params[i++] = temp;
-
-	/* Register 28 */
-	temp = (uint8_t)((pll_reg.p1 >> 16) & 0x03);
-	params[i++] = temp;
-
-	/* Registers 29-30 */
-	temp = (uint8_t)((pll_reg.p1 >> 8) & 0xFF);
-	params[i++] = temp;
-
-	temp = (uint8_t)(pll_reg.p1  & 0xFF);
-	params[i++] = temp;
-
-	/* Register 31 */
-	temp = (uint8_t)((pll_reg.p3 >> 12) & 0xF0);
-	temp += (uint8_t)((pll_reg.p2 >> 16) & 0x0F);
-	params[i++] = temp;
-
-	/* Registers 32-33 */
-	temp = (uint8_t)((pll_reg.p2 >> 8) & 0xFF);
-	params[i++] = temp;
-
-	temp = (uint8_t)(pll_reg.p2  & 0xFF);
-	params[i++] = temp;
-
-	/* Write the parameters */
-	if(target_pll == SI5351_PLLA)
+	if(pll_calc == 0)
 	{
-		si5351_write_bulk(SI5351_PLLA_PARAMETERS, i + 1, params);
-	}
-	else if(target_pll == SI5351_PLLB)
-	{
-		si5351_write_bulk(SI5351_PLLB_PARAMETERS, i + 1, params);
+		/* Registers 26-27 */
+		temp = ((pll_reg.p3 >> 8) & 0xFF);
+		params[i++] = temp;
+
+		temp = (uint8_t)(pll_reg.p3  & 0xFF);
+		params[i++] = temp;
+
+		/* Register 28 */
+		temp = (uint8_t)((pll_reg.p1 >> 16) & 0x03);
+		params[i++] = temp;
+
+		/* Registers 29-30 */
+		temp = (uint8_t)((pll_reg.p1 >> 8) & 0xFF);
+		params[i++] = temp;
+
+		temp = (uint8_t)(pll_reg.p1  & 0xFF);
+		params[i++] = temp;
+
+		/* Register 31 */
+		temp = (uint8_t)((pll_reg.p3 >> 12) & 0xF0);
+		temp += (uint8_t)((pll_reg.p2 >> 16) & 0x0F);
+		params[i++] = temp;
+
+		/* Registers 32-33 */
+		temp = (uint8_t)((pll_reg.p2 >> 8) & 0xFF);
+		params[i++] = temp;
+
+		temp = (uint8_t)(pll_reg.p2  & 0xFF);
+		params[i++] = temp;
+
+		/* Write the parameters */
+		if(target_pll == SI5351_PLLA)
+		{
+			si5351_write_bulk(SI5351_PLLA_PARAMETERS, i + 1, params);
+		}
+		else if(target_pll == SI5351_PLLB)
+		{
+			si5351_write_bulk(SI5351_PLLB_PARAMETERS, i + 1, params);
+		}
 	}
 
 	free(params);
@@ -238,6 +253,69 @@ void si5351_set_freq(uint32_t freq, enum si5351_clock clk)
 	}
 
 	free(params);
+}
+
+/*
+ * si5351_set_pll(uint32_t pll_freq, enum si5351_pll target_pll)
+ *
+ * Set the specified PLL to a specific oscillation frequency
+ *
+ * pll_freq - Desired PLL frequency
+ * target_pll - Which PLL to set
+ *     (use the si5351_pll enum)
+ */
+void si5351_set_pll(uint32_t pll_freq, enum si5351_pll target_pll)
+{
+	struct Si5351RegSet pll_reg;
+
+	pll_calc(pll_freq, &pll_reg, ref_correction);
+
+	/* Derive the register values to write */
+
+	/* Prepare an array for parameters to be written to */
+	uint8_t *params = malloc(sizeof(uint8_t) * 30);
+	uint8_t i = 0;
+	uint8_t temp;
+
+	/* Registers 26-27 */
+	temp = ((pll_reg.p3 >> 8) & 0xFF);
+	params[i++] = temp;
+
+	temp = (uint8_t)(pll_reg.p3  & 0xFF);
+	params[i++] = temp;
+
+	/* Register 28 */
+	temp = (uint8_t)((pll_reg.p1 >> 16) & 0x03);
+	params[i++] = temp;
+
+	/* Registers 29-30 */
+	temp = (uint8_t)((pll_reg.p1 >> 8) & 0xFF);
+	params[i++] = temp;
+
+	temp = (uint8_t)(pll_reg.p1  & 0xFF);
+	params[i++] = temp;
+
+	/* Register 31 */
+	temp = (uint8_t)((pll_reg.p3 >> 12) & 0xF0);
+	temp += (uint8_t)((pll_reg.p2 >> 16) & 0x0F);
+	params[i++] = temp;
+
+	/* Registers 32-33 */
+	temp = (uint8_t)((pll_reg.p2 >> 8) & 0xFF);
+	params[i++] = temp;
+
+	temp = (uint8_t)(pll_reg.p2  & 0xFF);
+	params[i++] = temp;
+
+	/* Write the parameters */
+	if(target_pll == SI5351_PLLA)
+	{
+		si5351_write_bulk(SI5351_PLLA_PARAMETERS, i + 1, params);
+	}
+	else if(target_pll == SI5351_PLLB)
+	{
+		si5351_write_bulk(SI5351_PLLB_PARAMETERS, i + 1, params);
+	}
 }
 
 /*
@@ -358,6 +436,17 @@ void si5351_set_correction(int32_t corr)
 {
 	eeprom_write_dword(&ee_ref_correction, corr);
 	ref_correction = corr;
+}
+
+/*
+ * si5351_get_correction(void)
+ *
+ * Returns the oscillator correction factor stored
+ * in EEPROM.
+ */
+int32_t si5351_get_correction(void)
+{
+	return eeprom_read_dword(&ee_ref_correction);
 }
 
 /*******************************/
@@ -535,7 +624,7 @@ uint32_t multisynth_calc(uint32_t freq, struct Si5351RegSet *reg)
 	return pll_freq;
 }
 
-uint32_t multisynth_recalc(uint32_t freq, uint32_t pll_freq,struct Si5351RegSet *reg)
+uint32_t multisynth_recalc(uint32_t freq, uint32_t pll_freq, struct Si5351RegSet *reg)
 {
 	uint64_t lltmp;
 	uint32_t rfrac, denom, a, b, c, p1, p2, p3;
