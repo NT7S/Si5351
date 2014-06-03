@@ -35,6 +35,8 @@ The second value passed in the above function is the desired driving PLL frequen
     si5351_set_pll(900000000, SI5351_PLLA);
     si5351_set_freq(10000000, 900000000, SI5351_CLK0);
 
+The PLL frequency only needs to be set once. Any additional frequency changes only need to use the si5351_set_freq() function as long as you are using the same PLL frequency as before.
+
 If we like we can adjust the output drive power:
 
     si5351_drive_strength(SI5351_CLK0, SI5351_DRIVE_4MA);
