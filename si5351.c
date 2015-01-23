@@ -67,7 +67,8 @@ void si5351_init(void)
 }
 
 static void
-si5351_set_multisynth(struct Si5351RegSet *msreg, int clock)
+si5351_set_multisynth(struct Si5351RegSet *msreg, enum si5351_clock clock,
+    enum si5351_pll pll_prog)
 {
 	int addr;
 	char regbuf[8];
@@ -121,7 +122,7 @@ si5351_set_multisynth(struct Si5351RegSet *msreg, int clock)
 	}
 
 	si5351_write_bulk(addr, 8, regbuf);
-	si5351_set_ms_source(clk, target_pll);
+	si5351_set_ms_source(clk, pll_prog);
 }
 
 /*
@@ -179,7 +180,7 @@ si5351_set_freq(uint32_t freq, uint32_t pll_freq, enum si5351_clock clk)
 	if (program_pll)
 		si5351_set_pll(pll_freq, pll_prog);
 
-	si5351_set_multisynth(&msreg, clock);
+	si5351_set_multisynth(&msreg, clock, pll_prog);
 	return (pll_freq);
 }
 
